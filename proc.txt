@@ -1,0 +1,65 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+void getId() {
+    system("ls /proc > Process.txt");
+}
+
+void getProcessData(char *p, FILE *f, int *counter) {
+    char statLocation[30], statmLocation[30];
+    FILE *stat, *statm;
+    sprintf(statLocation, "/proc/%s/stat", p);
+    sprintf(statmLocation, "/proc/%s/statm", p);
+
+    stat = fopen(statLocation, "r");
+    statm = fopen(statmLocation, "r");
+    if (stat == NULL) {
+        fprintf(f, "%s %s %s %s %s %s\n", p, "#", "#", "#", "#", "#");
+    } else {
+        char processId[20], parentProcessId[20], processState[20], executiveFileName[50], requestedMemory[20], allocatedMemory[20];
+        fscanf(stat, "%s %s %s %s", processId, executiveFileName, processState, parentProcessId);
+        fscanf(statm, "%s %s", requestedMemory, allocatedMemory);
+
+        printf( "| %*s | %*s | %*s | %*s | %*s | %*s |\n", -counter[0], processId, -counter[1],
+                executiveFileName, -counter[2], processState, -counter[3], parentProcessId, -counter[4],
+                requestedMemory, -counter[5], allocatedMemory);
+
+        if (counter[0] < strlen(processId))
+            counter[0] = strlen(processId);
+        if (counter[1] < strlen(executiveFileName))
+            counter[1] = strlen(executiveFileName);
+        if (counter[2] < strlen(processState))
+            counter[2] = strlen(processState);
+        if (counter[3] < strlen(parentProcessId))
+            counter[3] = strlen(parentProcessId);
+        if (counter[4] < strlen(requestedMemory))
+            counter[4] = strlen(requestedMemory);
+        if (counter[5] < strlen(allocatedMemory))
+            counter[5] = strlen(allocatedMemory);
+
+        fclose(stat);
+        fclose(statm);
+    }
+}
+
+int main() {
+    getId();
+    int counter[6] = {10, 19, 13, 17, 16, 16};
+    FILE *processID = fopen("Process.txt", "r");
+    FILE *out = fopen("out.txt", "w");
+
+    printf("| %*s | %*s | %*s | %*s | %*s | %*s |\n", -counter[0], "Process ID", -counter[1],
+            "Executive File Name", -counter[2], "Process State", -counter[3], "Parent Process ID", -counter[4],
+            "Requested Memory", -counter[5], "Allocated Memory");
+    char id[20];
+    while (!feof(processID)) {
+        fscanf(processID, "%s", id);
+        if (atoi(id) != 0)
+            getProcessData(id, out, counter);
+    }
+    fclose(processID);
+    fclose(out);
+
+    return 0;
+}
